@@ -4,6 +4,9 @@ from contextlib import closing
 from bs4 import BeautifulSoup
 from nltk.tokenize import word_tokenize
 import re
+import os.path
+import os
+import json
 
 
 def fetchFromURL(url):
@@ -86,21 +89,44 @@ def main():
 ##        finalOpen.write(finalHTML)
 ##        finalOpen.close()
 
-##        fOpen = (link, "r")
-##        data = f.read()
-    #text locally, how do we tokenize it?
 
-##    soup = BeautifulSoup(data, 'html.parser')
-##    extractedText = soup.get_text()
-##    extractedText = extractedText.lower()
-##    tokenizedText = word_tokenize(extractedText)
-    #print(tokenizedText)
-    
-    #anything that doesn't match this char set will be excluded
-##    for term in tokenizedText:
-##        reg = re.compile('[^a-zA-Z]')
-##        term = reg.sub('', term)
-##        print(term)
+    ############## making the html pages into text files
+
+    #contents of the current working directory
+##    directoryList = os.listdir('.')  # '.' indicates the current directory
+##    for dirItem in directoryList:
+##        if dirItem[-5:] == ".html":
+##            fileOpen = open(dirItem, 'r')
+##            data = fileOpen.read()
+##            fileOpen.close()
+##            #text locally, how do we tokenize it?
+##
+##            soup = BeautifulSoup(data, 'html.parser')
+##            extractedText = soup.get_text()
+##            extractedText = extractedText.lower()
+##            newDItem = dirItem[:-5] + '.txt'
+##
+##            fileOut = open(newDItem, "w")
+##            fileOut.write(extractedText)
+##            fileOut.close()
+            
+            
+            
+    directoryList = os.listdir('.')  # '.' indicates the current directory
+    for dirItem in directoryList:
+        #isolating our text file types
+        if dirItem == "LoversComplaint.txt":
+            fileOpen = open(dirItem, 'r')
+            data = fileOpen.read()
+            fileOpen.close()
+            #text locally, now tokenizing
+            tokenizedText = word_tokenize(data)
+            #anything that doesn't match this char set will be excluded
+            for term in tokenizedText:
+                if len(term) >= 4:
+                    reg = re.compile('[^a-zA-Z]')
+                    term = reg.sub('', term)
+                    print(term)
 
 
 main()
