@@ -110,12 +110,12 @@ def main():
 ##            fileOut.write(extractedText)
 ##            fileOut.close()
             
-            
-            
+    tokenDict = {}
+    docID = 1            
     directoryList = os.listdir('.')  # '.' indicates the current directory
     for dirItem in directoryList:
         #isolating our text file types
-        if dirItem == "LoversComplaint.txt":
+        if dirItem[-4:] == ".txt":
             fileOpen = open(dirItem, 'r')
             data = fileOpen.read()
             fileOpen.close()
@@ -127,6 +127,7 @@ def main():
                     reg = re.compile('[^a-zA-Z]')
                     term = reg.sub('', term)
                     print(term)
+        docID += 1
 
 
 main()
