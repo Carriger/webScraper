@@ -41,20 +41,21 @@ def main():
     soup = BeautifulSoup(rawHTML, 'html.parser')
     #finding all links from home page 
     allLinks = soup.find_all('a')
+
+    ######## FUNCTION CALLS  #####################
     
     #function call to scrape plays and poems
     #these are purposely commented out so they don't
             #perform every time
-    playsScraper(allLinks, directoryList, homeDir)
-    sonnetScraper(directoryList, homeDir)
-    finalFewPoems(allLinks, directoryList, homeDir)
-    makingTextFiles(directoryList, homeDir)
+    #playsScraper(allLinks, directoryList, homeDir)
+    #sonnetScraper(directoryList, homeDir)
+    #finalFewPoems(allLinks, directoryList, homeDir)
+    #makingTextFiles(directoryList, homeDir)
     
     #funtion call to tokenize and porter stemmer
     tokenDict = tokenizer(directoryList, homeDir)
     #function call to kick off our JSON converter
     JSONConverter(tokenDict)
-    docIDMaker(directoryList, homeDir)
     
     ################the following is for handling the play links
 def playsScraper(allLinks, directoryList, homeDir):
@@ -149,9 +150,13 @@ def makingTextFiles(directoryList, homeDir):
             os.chdir(homeDir)
 
 
-    ##################iterating through text files and tokenizing
+    ##################   iterating through text files and tokenizing
 def tokenizer(directoryList, homeDir):
     docUnits = "DocumentUnits"
+    #setting up our docID file
+    docIDFile = open("DocumentID.txt", "w")
+    docIDFile.write("Document Name and corresponding ID\n\n")
+    #setting up empty token dict
     tokenDict = {}
     docID = 1 
     #getting into our textfiles directory
@@ -182,35 +187,19 @@ def tokenizer(directoryList, homeDir):
                             else:
                                 if docID not in tokenDict.get(term):
                                     temp = tokenDict.get(term)
+                                    #this makes our dict values of type list
                                     temp = list(temp)
                                     tokenDict.update({term: [docID]+temp})
+                    #writing out to our docID file
+                    writeline = (dirItem + "\t" + str(docID) + "\n")
+                    docIDFile.write(writeline)
                                     
                     docID += 1
         #sending us back to the main file folder 
         os.chdir(homeDir)
+    docIDFile.close()
     #returns our token dict
     return tokenDict
-
-def docIDMaker(directoryList, homeDir):
-    docUnits = "DocumentUnits"
-    docMakerID = 1
-    docIDFile = open("DocumentID.txt", "w")
-    docIDFile.write("Document Name and corresponding ID\n\n")
-    directoryList = os.listdir('.') 
-    #getting into our textfiles directory
-    for dirItem in directoryList:
-        if os.path.isdir(dirItem) and dirItem == docUnits:
-            os.chdir(dirItem) #go into subdirectory docUnits
-            directoryList = os.listdir('.') 
-            #going through txt files within docUnits
-            for dirItem in directoryList:
-                if dirItem[-4:] == '.txt':
-                    #formatting our output document ID text file
-                    writeline = (dirItem + "\t" + str(docMakerID) + "\n")
-                    docIDFile.write(writeline)
-                    docMakerID += 1
-        os.chdir(homeDir)
-    docIDFile.close()
 
 def porterStemmerHelper(term):
     porter = PorterStemmer()
