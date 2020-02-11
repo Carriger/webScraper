@@ -131,43 +131,51 @@ def main():
 
         ##################iterating through text files and tokenizing
     txtFiles = "TextFiles"
+    #docIDFile = open("DocumentID.txt", "w")
+    #docIDFile.write("Document Name and corresponding ID\n\n")
+    tokenDict = {}
+    docID = 1
     directoryList = os.listdir('.')  # '.' indicates the current directory
     for dirItem in directoryList:
         if os.path.isdir(dirItem) and dirItem == txtFiles:
             os.chdir(dirItem) #go into subdirectory TextFiles
-            directoryList = os.listdir('.')  # '.' indicates the current directory
+            directoryList = os.listdir('.')  # '.' indicates the current directory 
             #going through html files within DocumentUnits
-            for dirItem in directoryList:
-                tokenDict = {}
-                docID = 1            
-                #isolating our text file types
-                if dirItem == "LoversComplaint.txt":
-                    fileOpen = open(dirItem, 'r')
-                    data = fileOpen.read()
-                    fileOpen.close()
-                    #text locally, now tokenizing
-                    tokenizedText = word_tokenize(data)
-                    #anything that doesn't match this char set will be excluded
-                    for term in tokenizedText:
-                        if len(term) >= 4:
-                            reg = re.compile('[^a-zA-Z]')
-                            term = reg.sub('', term)
-                            if term not in tokenDict:
-                                tokenDict[term] = docID
-##                                else:
-##                                    temp = tokenDict[term]
-##                                    if tokenDict[term] != docID:
-##                                        tokenDict[term] = 
+            for dirItem in directoryList:           
+                fileOpen = open(dirItem, 'r')
+                data = fileOpen.read()
+                fileOpen.close()
+                #text locally, now tokenizing
+                tokenizedText = word_tokenize(data)
+                #anything that doesn't match this char set will be excluded
+                for term in tokenizedText:
+                    if len(term) >= 4:
+                        reg = re.compile('[^a-zA-Z]')
+                        term = reg.sub('', term)
+                        if term not in tokenDict:
+                            tokenDict[term] = [docID]
+                        else:
+                            if docID not in tokenDict.get(term):
+                                temp = tokenDict.get(term)
+                                temp = list(temp)
+                                tokenDict.update({term: temp + [docID]})
                                     
-                    docID += 1
-                print(tokenDict)
+                
+                writeline = (dirItem + "\t" + str(docID) + "\n")
+                #docIDFile.write(writeline)
+                #docID += 1
 
+            #docIDFile.close()
+        #sending us back to the main file folder 
+        os.chdir(homeDir)
 
+    JSONConverter(tokenDict)
 
-            
-            
-        
+def JSONConverter(tokenDict):
 
+    #JSONDump = json.dumps(tokenDict, sort_keys = True)
+    with open("JSONFile.txt", "w") as outfile:
+        json.dump(tokenDict, outfile, sort_keys = True)
 
 
 main()
