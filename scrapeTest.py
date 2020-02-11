@@ -3,6 +3,7 @@ from requests.exceptions import RequestException
 from contextlib import closing
 from bs4 import BeautifulSoup
 from nltk.tokenize import word_tokenize
+import nltk
 import re
 import os.path
 import os
@@ -33,13 +34,14 @@ def logError(e):
 
 def main():
     directoryList = os.listdir('.')  # '.' indicates the current directory
+    #saving our main directly for later use
     homeDir = os.getcwd()
-    docUnits = "DocumentUnits"
     
     rawHTML = fetchFromURL('http://shakespeare.mit.edu')
     soup = BeautifulSoup(rawHTML, 'html.parser')
-
+    #finding all links from home page 
     allLinks = soup.find_all('a')
+    docUnits = "DocumentUnits"
     
     ################the following is for handling the play links
     
@@ -112,13 +114,13 @@ def main():
 ##    for dirItem in directoryList:
 ##        if os.path.isdir(dirItem) and dirItem == docUnits:
 ##            os.chdir(dirItem) #go into subdirectory DocumentUnits
-##            directoryList = os.listdir('.')  # '.' indicates the current directory
+##            directoryList = os.listdir('.')
 ##            #going through html files within DocumentUnits
 ##            for dirItem in directoryList:
 ##                fileOpen = open(dirItem, 'r')
 ##                data = fileOpen.read()
 ##                fileOpen.close()
-##                #text locally, how do we tokenize it?
+##                #text locally, now to tokenize
 ##                soup = BeautifulSoup(data, 'html.parser')
 ##                extractedText = soup.get_text()
 ##                extractedText = extractedText.lower()
@@ -135,11 +137,12 @@ def main():
     #docIDFile.write("Document Name and corresponding ID\n\n")
     tokenDict = {}
     docID = 1
-    directoryList = os.listdir('.')  # '.' indicates the current directory
+    directoryList = os.listdir('.') 
+    #getting into our textfiles directory
     for dirItem in directoryList:
         if os.path.isdir(dirItem) and dirItem == txtFiles:
             os.chdir(dirItem) #go into subdirectory TextFiles
-            directoryList = os.listdir('.')  # '.' indicates the current directory 
+            directoryList = os.listdir('.') 
             #going through html files within DocumentUnits
             for dirItem in directoryList:           
                 fileOpen = open(dirItem, 'r')
@@ -147,35 +150,44 @@ def main():
                 fileOpen.close()
                 #text locally, now tokenizing
                 tokenizedText = word_tokenize(data)
-                #anything that doesn't match this char set will be excluded
                 for term in tokenizedText:
                     if len(term) >= 4:
+                        #anything that doesn't match this char excluded
                         reg = re.compile('[^a-zA-Z]')
                         term = reg.sub('', term)
+                        #function call to our lemmatizer
+                        term = lemmatizer(term)
+                        #this will create our dictionary and associated document
+                        #that it occurs in. If already in dict, we simply update
+                        #the values list that already exists
                         if term not in tokenDict:
                             tokenDict[term] = [docID]
                         else:
                             if docID not in tokenDict.get(term):
                                 temp = tokenDict.get(term)
                                 temp = list(temp)
-                                tokenDict.update({term: temp + [docID]})
+                                tokenDict.update({term: [docID]+temp})
                                     
-                
+                #formatting our output document ID text file
                 writeline = (dirItem + "\t" + str(docID) + "\n")
                 #docIDFile.write(writeline)
-                #docID += 1
+                docID += 1
 
             #docIDFile.close()
         #sending us back to the main file folder 
         os.chdir(homeDir)
-
+    #function call to kick off our JSON converter
     JSONConverter(tokenDict)
+    
+def lemmatizer(term):
+    lemma = nltk.wordnet.WordNetLemmatizer()
+    term = lemma.lemmatize(term)
+    return term
+    
 
 def JSONConverter(tokenDict):
-
-    #JSONDump = json.dumps(tokenDict, sort_keys = True)
+    #setting up our JSON file, sort_keys alphabitizes
     with open("JSONFile.txt", "w") as outfile:
         json.dump(tokenDict, outfile, sort_keys = True)
-
-
+        
 main()
