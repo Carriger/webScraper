@@ -1,3 +1,9 @@
+"""
+Author: Travis Carriger
+Description: file that will scrape web pages, tokenize, and output
+a JSON file."""
+
+
 from requests import get
 from requests.exceptions import RequestException
 from contextlib import closing
@@ -55,7 +61,11 @@ def main():
     #funtion call to tokenize and porter stemmer
     tokenDict = tokenizer(directoryList, homeDir)
     #function call to kick off our JSON converter
-    JSONConverter(tokenDict)
+    #JSONConverter(tokenDict)
+
+    #functions to make our bigram index and JSONBiGrams 
+    biGramsDict = biGramHelper(tokenDict)
+    JSONBigram(biGramsDict)
     
     ################the following is for handling the play links
 def playsScraper(allLinks, directoryList, homeDir):
@@ -154,8 +164,8 @@ def makingTextFiles(directoryList, homeDir):
 def tokenizer(directoryList, homeDir):
     docUnits = "DocumentUnits"
     #setting up our docID file
-    docIDFile = open("DocumentID.txt", "w")
-    docIDFile.write("Document Name and corresponding ID\n\n")
+    #docIDFile = open("DocumentID.txt", "w")
+    #docIDFile.write("Document Name and corresponding ID\n\n")
     #setting up empty token dict
     tokenDict = {}
     docID = 1 
@@ -183,32 +193,69 @@ def tokenizer(directoryList, homeDir):
                             #that it occurs in. If already in dict, we simply update
                             #the values list that already exists
                             if term not in tokenDict:
-                                tokenDict[term] = [docID]
+                                frequency = 1
+                                tokenDict[term] = [[frequency],[docID]]
                             else:
-                                if docID not in tokenDict.get(term):
-                                    temp = tokenDict.get(term)
+                                #isolating docID
+                                if docID not in tokenDict[term][1]:
+                                    #isolating docID
+                                    tempDocID = tokenDict[term][1]
                                     #this makes our dict values of type list
-                                    temp = list(temp)
-                                    tokenDict.update({term: [docID]+temp})
+                                    tempDocID = list(tempDocID) + [docID]
+                                    #updating docID
+                                    tokenDict[term][1] = tempDocID
+                                #isolating frequency
+                                tempFreq = tokenDict[term][0]
+                                tempFreq[0] += 1
+                                tokenDict[term][0] = list(tempFreq)
+                                
                     #writing out to our docID file
-                    writeline = (dirItem + "\t" + str(docID) + "\n")
-                    docIDFile.write(writeline)
+##                    writeline = (dirItem + "\t" + str(docID) + "\n")
+##                    docIDFile.write(writeline)
                                     
                     docID += 1
         #sending us back to the main file folder 
         os.chdir(homeDir)
-    docIDFile.close()
+    #docIDFile.close()
     #returns our token dict
     return tokenDict
+
+def biGramHelper(tokenDict):
+    biGramsDict = {}
+    for term in tokenDict.keys():
+        dollarTerm = "$"+term+"$"
+        index = 0
+        while index < len(term)+1:
+            #stepping through our terms 2 chars at a time
+            biGrams = dollarTerm[index]+(dollarTerm[index + 1])
+            if biGrams not in biGramsDict:
+                biGramsDict[biGrams] = [term]
+            else:
+                temp = biGramsDict[biGrams]
+                temp = temp + [term]
+                #alphabetizing our terms
+                temp = sorted(temp)
+                biGramsDict[biGrams] = temp
+            index += 1
+
+    return biGramsDict
+        
 
 def porterStemmerHelper(term):
     porter = PorterStemmer()
     term = porter.stem(term)
     return term
 
+    ##### Function to export our tokenDict into a JSON file
 def JSONConverter(tokenDict):
     #setting up our JSON file, sort_keys alphabitizes
     with open("JSONFile.txt", "w") as outfile:
         json.dump(tokenDict, outfile, sort_keys = True)
+
+def JSONBigram(biGramsDict):
+    #setting up our JSON file, sort_keys alphabitizes
+    with open("JSONBigrams.txt", "w") as outfile:
+        json.dump(biGramsDict, outfile, sort_keys = True)
+    
         
 main()
